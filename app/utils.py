@@ -2,7 +2,7 @@
 import asyncio
 
 from tavily import TavilyClient, AsyncTavilyClient
-from src.report_maistro.state import Section
+from app.state import Section
 from langsmith import traceable
 
 tavily_client = TavilyClient()
