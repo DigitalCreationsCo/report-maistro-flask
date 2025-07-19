@@ -7,15 +7,33 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.constants import Send
 from langgraph.graph import START, END, StateGraph
 
-from src.report_maistro.state import ReportStateInput, ReportStateOutput, Sections, ReportState, SectionState, SectionOutputState, Queries
-from src.report_maistro.prompts import report_planner_query_writer_instructions, report_planner_instructions, query_writer_instructions, section_writer_instructions, final_section_writer_instructions
-from src.report_maistro.configuration import Configuration
-from src.report_maistro.utils import tavily_search_async, deduplicate_and_format_sources, format_sections
+from app.state import ReportStateInput, ReportStateOutput, Sections, ReportState, SectionState, SectionOutputState, Queries
+from app.prompts import report_planner_query_writer_instructions, report_planner_instructions, query_writer_instructions, section_writer_instructions, final_section_writer_instructions
+from app.configuration import Configuration
+from app.utils import tavily_search_async, deduplicate_and_format_sources, format_sections
+from app import app, graph
+
+from flask import Flask, request, jsonify
+import asyncio
 
 # LLMs 
 planner_model = ChatGoogleGenerativeAI(model=Configuration.planner_model, google_api_key=Configuration.google_api_key)
 writer_model = ChatAnthropic(model=Configuration.writer_model, temperature=0, anthropic_api_key=Configuration.anthropic_api_key) 
 
+@app.route("/", methods=["POST"])
+def run_report():
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Missing JSON payload"}), 400
+
+    try:
+        output = asyncio.run(graph.invoke(data))
+        return jsonify(output)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
 # Nodes
 async def generate_report_plan(state: ReportState, config: RunnableConfig):
     """ Generate the report plan """
