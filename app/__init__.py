@@ -24,4 +24,4 @@ app.config.from_object('app.configuration.DevelopmentConfig')
 # lm.setup_app(app)
 # lm.login_view = 'login'
 
-from app import views, models
+from app import graph
